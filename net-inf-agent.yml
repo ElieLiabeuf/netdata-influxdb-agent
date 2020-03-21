@@ -1,0 +1,27 @@
+## Netdata configuration
+netdata:
+  ## Netdata data collection interval
+  interval: "3m"
+  ## Number of points to gather for each collection.
+  ## This value is capped by "update every" config of netdata.
+  ## For example you can set
+  ## points = 20
+  ## interval = "10m"
+  ## to get measurement every 30 seconds (and polling netdata every 10 minutes)
+  points: 10
+  ## Grouping method if multiple collected values are to be grouped in order to return fewer points.
+  ## methods supported "min", "max", "average", "sum", "incremental-sum"
+  group: "average"
+  ## Netdata servers
+  servers:
+    - url: "http://netdata.localhost"
+      # Optional basic auth configuration
+      basic_auth_username: "test"
+      basic_auth_password: "test"
+
+## Influxdb v2 configuration
+influxdb:
+  url: "http://influxdb.localhost"
+  token: "token"
+  organization: "organization"
+  bucket: "bucket"

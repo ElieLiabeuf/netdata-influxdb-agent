@@ -1,0 +1,44 @@
+name: Build on all branches and PR
+
+on:
+  push:
+    branches:
+    - '**'
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: golang:1.14-alpine
+    steps:
+      - name: Install build-base
+        run: apk add build-base
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Build linux-amd64 variant
+        run: go build -ldflags '-linkmode external -w -extldflags "-static"' -o netdata-influxdb-relay-amd64
+      - uses: actions/upload-artifact@v1
+        with:
+          name: netdata-influxdb-relay-amd64
+          path: netdata-influxdb-relay-amd64
+      - name: Build linux-i386 variant
+        run: GOARCH=386 go build -ldflags '-w' -o netdata-influxdb-relay-i386
+      - uses: actions/upload-artifact@v1
+        with:
+          name: netdata-influxdb-relay-i386
+          path: netdata-influxdb-relay-i386
+      - name: Build linux-arm variant
+        run: GOARCH=arm go build -ldflags '-w' -o netdata-influxdb-relay-arm
+      - uses: actions/upload-artifact@v1
+        with:
+          name: netdata-influxdb-relay-arm
+          path: netdata-influxdb-relay-arm
+      - name: Build linux-arm64 variant
+        run: GOARCH=arm64 go build -ldflags '-w' -o netdata-influxdb-relay-arm64
+      - uses: actions/upload-artifact@v1
+        with:
+          name: netdata-influxdb-relay-arm64
+          path: netdata-influxdb-relay-arm64
