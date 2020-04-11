@@ -1,8 +1,10 @@
-name: Build on all branches and PR
+name: Build and Release
 
 on:
   push:
     branches:
+    - '**'
+    tags:
     - '**'
   pull_request:
     branches:
@@ -16,6 +18,8 @@ jobs:
     steps:
       - name: Install build-base
         run: apk add build-base
+      - name: Install git
+        run: apk add git
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Build linux-amd64 variant
@@ -42,3 +46,21 @@ jobs:
         with:
           name: netdata-influxdb-relay-arm64
           path: netdata-influxdb-relay-arm64
+      - name: Create release note
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          previousTag=$(git tag --sort=committerdate | tail -2 | head -1)
+          if [[ -z $previousTag ]]
+          then
+            git log --pretty=format:"- %s" > CHANGELOG.txt
+          else
+            git log --pretty=format:"- %s" $previousTag...${{ github.sha }} > CHANGELOG.txt
+          fi
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body_path: CHANGELOG.txt
+          files: netdata-influxdb-relay*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
