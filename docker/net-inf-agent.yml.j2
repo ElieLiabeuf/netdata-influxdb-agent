@@ -1,0 +1,20 @@
+netdata:
+  interval: "{{ NETDATA_INTERVAL | default('3m') }}"
+  points: "{{ NETDATA_POINTS | default(10) }}"
+  group: "{{ NETDATA_GROUP | default('average') }}"
+  servers:
+  {% for server in NETDATA_SERVERS.split(',') %}
+  {% if '@' in server %}
+    - url: "{{ server.split('@')[1] }}"
+      basic_auth_username: "{{ server.split('@')[0].split(':')[0] }}"
+      basic_auth_password: "{{ server.split('@')[0].split(':')[1] }}"
+  {% else %}
+    - url: "{{ server }}"
+  {% endif %}
+  {% endfor %}
+
+influxdb:
+  url: "{{ INFLUXDB_URL }}"
+  token: "{{ INFLUXDB_TOKEN }}"
+  organization: "{{ INFLUXDB_ORGANIZATION }}"
+  bucket: "{{ INFLUXDB_BUCKET }}"

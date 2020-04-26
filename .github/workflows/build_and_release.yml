@@ -23,29 +23,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Build linux-amd64 variant
-        run: go build -ldflags '-linkmode external -w -extldflags "-static"' -o netdata-influxdb-relay-amd64
+        run: go build -ldflags '-linkmode external -w -extldflags "-static"' -o netdata-influxdb-agent-amd64
       - uses: actions/upload-artifact@v1
         with:
-          name: netdata-influxdb-relay-amd64
-          path: netdata-influxdb-relay-amd64
+          name: netdata-influxdb-agent-amd64
+          path: netdata-influxdb-agent-amd64
       - name: Build linux-i386 variant
-        run: GOARCH=386 go build -ldflags '-w' -o netdata-influxdb-relay-i386
+        run: GOARCH=386 go build -ldflags '-w' -o netdata-influxdb-agent-i386
       - uses: actions/upload-artifact@v1
         with:
-          name: netdata-influxdb-relay-i386
-          path: netdata-influxdb-relay-i386
+          name: netdata-influxdb-agent-i386
+          path: netdata-influxdb-agent-i386
       - name: Build linux-arm variant
-        run: GOARCH=arm go build -ldflags '-w' -o netdata-influxdb-relay-arm
+        run: GOARCH=arm go build -ldflags '-w' -o netdata-influxdb-agent-arm
       - uses: actions/upload-artifact@v1
         with:
-          name: netdata-influxdb-relay-arm
-          path: netdata-influxdb-relay-arm
+          name: netdata-influxdb-agent-arm
+          path: netdata-influxdb-agent-arm
       - name: Build linux-arm64 variant
-        run: GOARCH=arm64 go build -ldflags '-w' -o netdata-influxdb-relay-arm64
+        run: GOARCH=arm64 go build -ldflags '-w' -o netdata-influxdb-agent-arm64
       - uses: actions/upload-artifact@v1
         with:
-          name: netdata-influxdb-relay-arm64
-          path: netdata-influxdb-relay-arm64
+          name: netdata-influxdb-agent-arm64
+          path: netdata-influxdb-agent-arm64
       - name: Create release note
         if: startsWith(github.ref, 'refs/tags/')
         run: |
@@ -61,6 +61,35 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           body_path: CHANGELOG.txt
-          files: netdata-influxdb-relay*
+          files: netdata-influxdb-agent*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  package:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - build
+    name: Package Docker
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docker
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Build image
+        run: docker build . --build-arg version=${GITHUB_REF:10} -t image
+      - name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+      - name: Push image
+        run: |
+          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/netdata-influxdb-agent
+
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          VERSION=${GITHUB_REF:10}
+
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+
+          docker tag image $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION

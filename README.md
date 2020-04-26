@@ -23,7 +23,9 @@ Advantages of this solution versus others
 
 You can download the binaries directly from the releases section.
 
-A Docker image and an Ansible role will be added soon.
+A Docker image is also available in the [packages](https://github.com/ElieLiabeuf/netdata-influxdb-agent/packages) section.
+
+See [this readme](./docker/README.md) for documentation.
 
 ## Configuration
 
